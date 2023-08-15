@@ -1,6 +1,6 @@
-- Sample item
-/ Working on right now
-\ Waiting for something
-X Completed!
-! A great idea
-
+* Today
+- Todo
+/ Waiting
+X Done
+! Idea
+< Archive

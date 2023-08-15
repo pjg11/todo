@@ -11,13 +11,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var p *tea.Program
+
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
 type item struct {
 	title, desc string
 }
-
-type key int
 
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
@@ -25,10 +25,23 @@ func (i item) FilterValue() string { return i.desc }
 
 type model struct {
 	list   list.Model
-	active key
+	active int
 }
 
 func (m model) Init() tea.Cmd {
+	return nil
+}
+
+// Custom function to switch between the different categories.
+func (m model) ChangeFilter(s string) tea.Cmd {
+	go func() {
+		if m.list.IsFiltered() {
+			p.Send(tea.KeyMsg(tea.Key{Type: tea.KeyEsc}))
+		}
+		p.Send(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune{'/'}}))
+		p.Send(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune(s)}))
+		p.Send(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
+	}()
 	return nil
 }
 
@@ -41,21 +54,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "tab" {
 			switch m.active {
 			case 0:
-				m.list.SetFilterText("today")
+				m.ChangeFilter("today")
 			case 1:
-				m.list.SetFilterText("waiting")
+				m.ChangeFilter("todo")
 			case 2:
-				m.list.SetFilterText("todo")
+				m.ChangeFilter("waiting")
 			case 3:
-				m.list.SetFilterText("done")
+				m.ChangeFilter("done")
 			case 4:
-				m.list.SetFilterText("idea")
+				m.ChangeFilter("idea")
 			case 5:
-				m.list.SetFilterText("someday")
-			case 6:
-				m.list.SetFilterText("archive")
+				m.ChangeFilter("archive")
 			}
-			m.active = (m.active + 1) % 7
+			m.active = (m.active + 1) % 6
+			return m, nil
 		}
 
 	case tea.WindowSizeMsg:
@@ -104,8 +116,6 @@ func main() {
 				desc = "done"
 			case '!':
 				desc = "idea"
-			case '>':
-				desc = "someday"
 			case '<':
 				desc = "archive"
 			default:
@@ -116,7 +126,8 @@ func main() {
 	}
 
 	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	m.list.Title = "TODO"
+	p = tea.NewProgram(m, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
@@ -124,4 +135,6 @@ func main() {
 	}
 }
 
-//TODO add help for switching between sections
+// TODO add help for switching between sections
+// TODO Add feature to open editor from the app
+// TODO Add help for editor
