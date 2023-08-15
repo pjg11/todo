@@ -1,0 +1,8 @@
+- Todo
+/ Doing
+X Done
+? Waiting
+> Scheduled
+< Archived
+! Idea
+# Note
